@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Materialräknare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F4EF;
+    --ink:#2B2622;
+    --accent:#D9622B;
+    --accent-dark:#B84E1E;
+    --pine:#4A6B5A;
+    --card:#FFFFFF;
+    --border:#E4DCD0;
+    --muted:#8A7F72;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);}
+
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    padding:32px 20px 60px;
+    line-height:1.4;
+  }
+
+  .app{max-width:880px;margin:0 auto;}
+
+  /* ---------- Header ---------- */
+
+  .masthead{margin-bottom:28px;}
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.14em;
+    color:var(--accent-dark);
+    margin:0 0 8px;
+    text-transform:uppercase;
+  }
+
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,42px);
+    letter-spacing:.01em;
+    margin:0 0 8px;
+    text-transform:uppercase;
+  }
+
+  .sub{
+    color:var(--muted);
+    margin:0;
+    font-size:15px;
+    max-width:46ch;
+  }
+
+  /* ---------- Tabs (hang-tags) ---------- */
+
+  .tags{
+    display:flex;
+    gap:10px;
+    margin:28px 0 18px;
+    flex-wrap:wrap;
+  }
+
+  .tag{
+    position:relative;
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    background:var(--card);
+    color:var(--ink);
+    border:1.5px dashed var(--border);
+    border-radius:4px;
+    padding:10px 20px 10px 30px;
+    cursor:pointer;
+    transition:transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+  }
+
+  .tag::before{
+    content:'';
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--bg);
+    border:1.5px solid var(--muted);
+  }
+
+  .tag:hover{transform:translateY(-2px);}
+
+  .tag[aria-selected="true"]{
+    background:var(--accent);
+    border-color:var(--accent);
+    border-style:solid;
+    color:#fff;
+    transform:translateY(-3px);
+    box-shadow:0 4px 0 var(--accent-dark);
+  }
+
+  .tag[aria-selected="true"]::before{
+    background:#fff;
+    border-color:#fff;
+  }
+
+  .tag:focus-visible{outline:2px solid var(--pine);outline-offset:2px;}
+
+  /* ---------- Board ---------- */
+
+  .board{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:16px;
+  }
+
+  @media (max-width:680px){
+    .board{grid-template-columns:1fr;}
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:22px;
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .field{margin-bottom:16px;}
+
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+
+  .field label .hint{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+
+  .field input[type="number"]{
+    width:100%;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    font-weight:500;
+    padding:10px 12px;
+    border:1.5px solid var(--border);
+    border-radius:6px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+
+  .field input[type="number"]:focus-visible{
+    outline:none;
+    border-color:var(--accent);
+    background:#fff;
+  }
+
+  .field .row{display:flex;gap:10px;}
+  .field .row > div{flex:1;}
+
+  .waste-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .waste-row input[type="range"]{flex:1;accent-color:var(--accent);}
+
+  .waste-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:14px;
+    min-width:38px;
+    text-align:right;
+  }
+
+  /* ---------- Result card ---------- */
+
+  .result-card{display:flex;flex-direction:column;}
+
+  .result-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+
+  .headline{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:40px;
+    line-height:1;
+    margin:0 0 2px;
+  }
+
+  .headline .unit{font-size:20px;color:var(--muted);margin-left:4px;}
+
+  .package-line{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--pine);
+    font-weight:600;
+    margin:6px 0 20px;
+  }
+
+  .breakdown{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    display:grid;
+    grid-template-columns:1fr auto;
+    row-gap:4px;
+    margin-bottom:18px;
+  }
+
+  .breakdown .val{text-align:right;color:var(--ink);}
+  .breakdown .total-row .val, .breakdown .total-row .lab{color:var(--ink);font-weight:600;}
+
+  /* ---------- Ruler / offcut bar (signature element) ---------- */
+
+  .ruler-wrap{margin-top:auto;}
+
+  .ruler-legend{
+    display:flex;
+    gap:14px;
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--muted);
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+
+  .ruler-legend span{display:flex;align-items:center;gap:5px;}
+
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .swatch.net{background:var(--pine);}
+  .swatch.waste{
+    background:repeating-linear-gradient(45deg,var(--accent) 0 4px, var(--accent-dark) 4px 8px);
+  }
+  .swatch.leftover{background:repeating-linear-gradient(45deg,var(--border) 0 4px, #fff 4px 8px);}
+
+  .ruler{
+    position:relative;
+    height:34px;
+    border:1.5px solid var(--ink);
+    border-radius:4px;
+    overflow:hidden;
+    background:#fff;
+  }
+
+  .ruler .seg{position:absolute;top:0;bottom:0;left:0;transition:width .2s ease;}
+  .seg-net{background:var(--pine);}
+  .seg-waste{background:repeating-linear-gradient(45deg,var(--accent) 0 5px, var(--accent-dark) 5px 10px);}
+  .seg-leftover{background:repeating-linear-gradient(45deg,var(--border) 0 5px, #fff 5px 10px);}
+
+  .ruler .ticks{
+    position:absolute;
+    inset:0;
+    display:flex;
+  }
+  .ruler .tick{
+    flex:1;
+    border-right:1px solid rgba(43,38,34,.12);
+  }
+  .ruler .tick:last-child{border-right:none;}
+
+  /* ---------- Footer / actions ---------- */
+
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+
+  button.copy{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    padding:10px 16px;
+    cursor:pointer;
+  }
+
+  button.copy:hover{background:var(--accent-dark);}
+  button.copy:focus-visible{outline:2px solid var(--pine);outline-offset:2px;}
+
+  .copied-msg{
+    font-size:13px;
+    color:var(--pine);
+    font-weight:600;
+    align-self:center;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .copied-msg.show{opacity:1;}
+
+  footer.note{
+    margin-top:30px;
+    font-size:12.5px;
+    color:var(--muted);
+    border-top:1px dashed var(--border);
+    padding-top:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="masthead">
+    <p class="eyebrow">Snabb kalkyl för butik och kund</p>
+    <h1>Materialräknare</h1>
+    <p class="sub">Fyll i ytan och förpackningsstorleken – få exakt antal att plocka fram, inklusive spillmarginal.</p>
+  </header>
+
+  <nav class="tags" role="tablist">
+    <button class="tag" data-tab="paint" aria-selected="true">Färg</button>
+    <button class="tag" data-tab="floor" aria-selected="false">Golv</button>
+    <button class="tag" data-tab="tile" aria-selected="false">Kakel</button>
+    <button class="tag" data-tab="insulation" aria-selected="false">Isolering</button>
+    <button class="tag" data-tab="deck" aria-selected="false">Altan</button>
+  </nav>
+
+
+  <main class="board">
+
+    <!-- ============ INPUT CARD ============ -->
+    <section class="card">
+
+      <!-- PAINT -->
+      <div class="panel active" data-panel="paint">
+        <div class="field">
+          <label>Väggarea <span class="hint">m²</span></label>
+          <input type="number" id="paint-area" value="24" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Dra bort dörrar/fönster <span class="hint">m²</span></label>
+          <input type="number" id="paint-openings" value="0" min="0" step="0.1">
+        </div>
+        <div class="field row">
+          <div>
+            <label>Antal strykningar</label>
+            <input type="number" id="paint-coats" value="2" min="1" step="1">
+          </div>
+          <div>
+            <label>Täckförmåga <span class="hint">m²/liter</span></label>
+            <input type="number" id="paint-coverage" value="8" min="0.1" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label>Burkstorlek <span class="hint">liter</span></label>
+          <input type="number" id="paint-package" value="10" min="0.1" step="0.1">
+        </div>
+        <div class="field">
+          <label>Spillmarginal <span class="waste-value" id="paint-waste-val">10%</span></label>
+          <div class="waste-row">
+            <input type="range" id="paint-waste" value="10" min="0" max="30" step="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- FLOOR -->
+      <div class="panel" data-panel="floor">
+        <div class="field">
+          <label>Golvarea <span class="hint">m²</span></label>
+          <input type="number" id="floor-area" value="18" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Dra bort skåp/fasta hinder <span class="hint">m²</span></label>
+          <input type="number" id="floor-openings" value="0" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Förpackningsstorlek <span class="hint">m²/förp.</span></label>
+          <input type="number" id="floor-package" value="2.22" min="0.01" step="0.01">
+        </div>
+        <div class="field">
+          <label>Spillmarginal <span class="waste-value" id="floor-waste-val">8%</span></label>
+          <div class="waste-row">
+            <input type="range" id="floor-waste" value="8" min="0" max="30" step="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- TILE -->
+      <div class="panel" data-panel="tile">
+        <div class="field">
+          <label>Yta att kaklas <span class="hint">m²</span></label>
+          <input type="number" id="tile-area" value="6" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Dra bort t.ex. golvbrunn <span class="hint">m²</span></label>
+          <input type="number" id="tile-openings" value="0" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Förpackningsstorlek <span class="hint">m²/kartong</span></label>
+          <input type="number" id="tile-package" value="1" min="0.01" step="0.01">
+        </div>
+        <div class="field">
+          <label>Spillmarginal <span class="waste-value" id="tile-waste-val">15%</span></label>
+          <div class="waste-row">
+            <input type="range" id="tile-waste" value="15" min="0" max="30" step="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- INSULATION -->
+      <div class="panel" data-panel="insulation">
+        <div class="field">
+          <label>Yta att isolera <span class="hint">m²</span></label>
+          <input type="number" id="insul-area" value="30" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Dra bort t.ex. reglar/genomföringar <span class="hint">m²</span></label>
+          <input type="number" id="insul-openings" value="0" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Förpackningsstorlek <span class="hint">m²/förp.</span></label>
+          <input type="number" id="insul-package" value="5.94" min="0.01" step="0.01">
+        </div>
+        <div class="field">
+          <label>Spillmarginal <span class="waste-value" id="insul-waste-val">5%</span></label>
+          <div class="waste-row">
+            <input type="range" id="insul-waste" value="5" min="0" max="30" step="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- DECK / ALTAN -->
+      <div class="panel" data-panel="deck">
+        <div class="field">
+          <label>Altanyta <span class="hint">m²</span></label>
+          <input type="number" id="deck-area" value="15" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Dra bort t.ex. runt stolpar/rabatt <span class="hint">m²</span></label>
+          <input type="number" id="deck-openings" value="0" min="0" step="0.1">
+        </div>
+        <div class="field row">
+          <div>
+            <label>Brädans bredd <span class="hint">m</span></label>
+            <input type="number" id="deck-width" value="0.12" min="0.01" step="0.01">
+          </div>
+          <div>
+            <label>Brädans längd <span class="hint">m</span></label>
+            <input type="number" id="deck-length" value="3.6" min="0.01" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label>Spillmarginal <span class="waste-value" id="deck-waste-val">10%</span></label>
+          <div class="waste-row">
+            <input type="range" id="deck-waste" value="10" min="0" max="30" step="1">
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ RESULT CARD ============ -->
+    <section class="card result-card">
+      <div>
+        <p class="result-eyebrow" id="result-label">Du behöver</p>
+        <p class="headline"><span id="result-amount">0</span><span class="unit" id="result-unit">liter</span></p>
+        <p class="package-line" id="result-packages">0 burkar (10 L)</p>
+
+        <div class="breakdown">
+          <div class="lab">Nettoåtgång</div><div class="val" id="b-net">0</div>
+          <div class="lab">Spillmarginal</div><div class="val" id="b-waste">0</div>
+          <div class="lab total-row">Totalt behov</div><div class="val total-row" id="b-total">0</div>
+          <div class="lab">Blir över</div><div class="val" id="b-leftover">0</div>
+        </div>
+      </div>
+
+      <div class="ruler-wrap">
+        <div class="ruler-legend">
+          <span><span class="swatch net"></span>Nettoåtgång</span>
+          <span><span class="swatch waste"></span>Spill</span>
+          <span><span class="swatch leftover"></span>Blir över</span>
+        </div>
+        <div class="ruler">
+          <div class="ticks">
+            <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+            <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          </div>
+          <div class="seg seg-net" id="seg-net" style="width:0%"></div>
+          <div class="seg seg-waste" id="seg-waste" style="width:0%;left:0%"></div>
+          <div class="seg seg-leftover" id="seg-leftover" style="width:0%;left:0%"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="copy" id="copy-btn">Kopiera resultat</button>
+        <span class="copied-msg" id="copied-msg">Kopierat!</span>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="note">
+    Standardvärdena är riktvärden – kontrollera alltid åtgång och förpackningsstorlek på produktens egen etikett innan du handlar.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  // ---- Config per material tab ----
+  var config = {
+    paint: {
+      unit: 'liter',
+      unitPlural: 'burkar',
+      compute: function(){
+        var area = num('paint-area');
+        var openings = num('paint-openings');
+        var coats = num('paint-coats');
+        var coverage = num('paint-coverage') || 1;
+        var net = Math.max(area - openings, 0) * coats / coverage;
+        return net;
+      },
+      wasteId: 'paint-waste',
+      packageId: 'paint-package',
+      label: 'färg'
+    },
+    floor: {
+      unit: 'm²',
+      unitPlural: 'förpackningar',
+      compute: function(){
+        var area = num('floor-area');
+        var openings = num('floor-openings');
+        return Math.max(area - openings, 0);
+      },
+      wasteId: 'floor-waste',
+      packageId: 'floor-package',
+      label: 'golv'
+    },
+    tile: {
+      unit: 'm²',
+      unitPlural: 'kartonger',
+      compute: function(){
+        var area = num('tile-area');
+        var openings = num('tile-openings');
+        return Math.max(area - openings, 0);
+      },
+      wasteId: 'tile-waste',
+      packageId: 'tile-package',
+      label: 'kakel'
+    },
+    insulation: {
+      unit: 'm²',
+      unitPlural: 'förpackningar',
+      compute: function(){
+        var area = num('insul-area');
+        var openings = num('insul-openings');
+        return Math.max(area - openings, 0);
+      },
+      wasteId: 'insul-waste',
+      packageId: 'insul-package',
+      label: 'isolering'
+    },
+    deck: {
+      unit: 'm²',
+      unitPlural: 'brädor',
+      compute: function(){
+        var area = num('deck-area');
+        var openings = num('deck-openings');
+        return Math.max(area - openings, 0);
+      },
+      wasteId: 'deck-waste',
+      getPackageSize: function(){
+        return num('deck-width') * num('deck-length');
+      },
+      packageLine: function(count, pkgSize){
+        return count + ' brädor (bredd ' + fmt(num('deck-width')) + ' m × längd ' +
+          fmt(num('deck-length')) + ' m = ' + fmt(pkgSize) + ' m²/st)';
+      },
+      label: 'trall'
+    }
+  };
+
+  var currentTab = 'paint';
+
+  function num(id){
+    var el = document.getElementById(id);
+    var v = parseFloat(el.value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function fmt(n){
+    return n.toLocaleString('sv-SE', {minimumFractionDigits:1, maximumFractionDigits:1});
+  }
+
+  // ---- Tab switching ----
+  var tagButtons = document.querySelectorAll('.tag');
+  tagButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tagButtons.forEach(function(b){ b.setAttribute('aria-selected','false'); });
+      btn.setAttribute('aria-selected','true');
+
+      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+      var panel = document.querySelector('.panel[data-panel="'+btn.dataset.tab+'"]');
+      panel.classList.add('active');
+
+      currentTab = btn.dataset.tab;
+      calculate();
+    });
+  });
+
+  // ---- Waste sliders: live label update ----
+  ['paint','floor','tile','insul','deck'].forEach(function(prefix){
+    var slider = document.getElementById(prefix+'-waste');
+    var valLabel = document.getElementById(prefix+'-waste-val');
+    if(slider){
+      slider.addEventListener('input', function(){
+        valLabel.textContent = slider.value + '%';
+        calculate();
+      });
+    }
+  });
+
+  // ---- Any number input change recalculates ----
+  document.querySelectorAll('input[type="number"]').forEach(function(inp){
+    inp.addEventListener('input', calculate);
+  });
+
+  // ---- Core calculation ----
+  function calculate(){
+    var cfg = config[currentTab];
+    var net = cfg.compute();
+    var wasteEl = document.getElementById(cfg.wasteId);
+    var wastePct = parseFloat(wasteEl.value) || 0;
+    var pkgSize = cfg.getPackageSize
+      ? cfg.getPackageSize()
+      : (parseFloat(document.getElementById(cfg.packageId).value) || 1);
+    if(!pkgSize || pkgSize <= 0) pkgSize = 1;
+
+    var wasteAmount = net * (wastePct/100);
+    var total = net + wasteAmount;
+    var packages = Math.ceil(total / pkgSize);
+    var boughtTotal = packages * pkgSize;
+    var leftover = Math.max(boughtTotal - total, 0);
+
+    document.getElementById('result-label').textContent = 'Du behöver (' + cfg.label + ')';
+    document.getElementById('result-amount').textContent = fmt(total);
+    document.getElementById('result-unit').textContent = cfg.unit;
+    document.getElementById('result-packages').textContent = cfg.packageLine
+      ? cfg.packageLine(packages, pkgSize)
+      : (packages + ' ' + cfg.unitPlural + ' à ' + fmt(pkgSize) + ' ' + cfg.unit);
+
+    document.getElementById('b-net').textContent = fmt(net) + ' ' + cfg.unit;
+    document.getElementById('b-waste').textContent = '+' + fmt(wasteAmount) + ' ' + cfg.unit + ' (' + wastePct + '%)';
+    document.getElementById('b-total').textContent = fmt(total) + ' ' + cfg.unit;
+    document.getElementById('b-leftover').textContent = fmt(leftover) + ' ' + cfg.unit;
+
+    // ---- Ruler segments (net / waste / leftover), scaled against boughtTotal ----
+    var scale = boughtTotal > 0 ? boughtTotal : 1;
+    var netPct = (net/scale)*100;
+    var wastePctBar = (wasteAmount/scale)*100;
+    var leftoverPct = (leftover/scale)*100;
+
+    var segNet = document.getElementById('seg-net');
+    var segWaste = document.getElementById('seg-waste');
+    var segLeftover = document.getElementById('seg-leftover');
+
+    segNet.style.width = netPct + '%';
+    segNet.style.left = '0%';
+
+    segWaste.style.width = wastePctBar + '%';
+    segWaste.style.left = netPct + '%';
+
+    segLeftover.style.width = leftoverPct + '%';
+    segLeftover.style.left = (netPct+wastePctBar) + '%';
+
+    // store last summary for copy button
+    var pkgText = cfg.packageLine
+      ? cfg.packageLine(packages, pkgSize)
+      : (packages + ' ' + cfg.unitPlural + ' à ' + fmt(pkgSize) + ' ' + cfg.unit);
+    window.__lastSummary =
+      cfg.label.charAt(0).toUpperCase()+cfg.label.slice(1) + ': ' +
+      fmt(net) + ' ' + cfg.unit + ' netto + ' + wastePct + '% spill = ' +
+      fmt(total) + ' ' + cfg.unit + ' → ' + pkgText +
+      ' (' + fmt(leftover) + ' ' + cfg.unit + ' blir över).';
+  }
+
+  // ---- Copy button ----
+  document.getElementById('copy-btn').addEventListener('click', function(){
+    var text = window.__lastSummary || '';
+    var msg = document.getElementById('copied-msg');
+    function showMsg(){
+      msg.classList.add('show');
+      setTimeout(function(){ msg.classList.remove('show'); }, 1600);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(showMsg).catch(function(){
+        fallbackCopy(text); showMsg();
+      });
+    } else {
+      fallbackCopy(text); showMsg();
+    }
+  });
+
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  // ---- Init ----
+  calculate();
+
+})();
+</script>
+
+</body>
+</html>
